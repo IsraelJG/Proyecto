@@ -1,4 +1,9 @@
-name: CI de Proyecto Final IRIC (Docker Build)
+name: CI de Proyecto Final IRIC (Docker Build & Test)
+
+# Información del alumno para el reporte:
+# Materia: Automatizacion de Infraestructura II
+# Profesor: [Inserta el nombre de tu profesor aquí]
+# Alumno: Marvin Israel Jaramillo Garcia
 
 on:
   push:
@@ -11,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_app:
+  build_and_test_app:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Checkout del código
@@ -23,18 +28,50 @@ jobs:
 
       - name: 3. Construir Imagen de Docker (Prueba de CI)
         # La construcción de la imagen es la prueba más robusta de que la app funciona.
-        # Usa un tag simple: israiljg/proyecto:latest
         run: |
+          echo "Construyendo imagen..."
           docker build -t israeljg/proyecto:latest .
         
       - name: 4. Verificar existencia de imagen
-        # Asegura que la imagen se construyó y está lista
+        # Asegura que la imagen se construyó correctamente
         run: |
           if [ "$(docker images -q israeljg/proyecto:latest 2> /dev/null)" == "" ]; then
             echo "Error: La imagen de Docker no se construyó correctamente."
             exit 1
           fi
+
+      - name: 5. Ejecutar Contenedor y Probar la Aplicación
+        id: functional_test
+        run: |
+          echo "Ejecutando contenedor en background y mapeando puerto 8080..."
+          # Inicia el contenedor en segundo plano, mapeando el puerto 5000 interno al 8080 externo
+          CONTAINER_ID=$(docker run -d -p 8080:5000 israeljg/proyecto:latest)
+
+          # Espera 5 segundos para que la aplicación Flask se inicie completamente
+          sleep 5
+
+          echo "Probando la accesibilidad de la aplicación en http://localhost:8080"
+          # Usa curl para acceder a la aplicación.
+          # -s: Silencioso
+          # -f: Falla en errores HTTP (ej. 4xx o 5xx)
+          # -S: Muestra errores si falló
+          RESPONSE=$(curl -s -f -S http://localhost:8080)
           
-## Materia: Automatizacion de Infraestructura II
-## Profesor
-## Alumno: Marvin Israel Jaramillo Garcia
+          # Verifica que la respuesta contiene texto clave para validar el contenido.
+          # Usamos 'Proyecto Final DevOps' o 'Israel J. G.' como verificación de contenido.
+          if echo "$RESPONSE" | grep -q "Proyecto Final DevOps"; then
+            echo "✅ Prueba Funcional Exitosa: La aplicación Flask respondió y el contenido es correcto."
+          else
+            echo "❌ Prueba Funcional Fallida: La aplicación respondió, pero el contenido esperado no se encontró."
+            echo "Respuesta recibida:"
+            echo "$RESPONSE"
+            docker logs $CONTAINER_ID
+            exit 1
+          fi
+
+        # Asegúrate de detener el contenedor después de la prueba
+        finally:
+          if [ -n "$CONTAINER_ID" ]; then
+            docker rm -f $CONTAINER_ID || true
+            echo "Contenedor detenido y eliminado."
+          fi
