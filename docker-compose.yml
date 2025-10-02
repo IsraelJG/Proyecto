@@ -1,0 +1,22 @@
+version: "3.8"
+## Materia: Automatizacion de Infraestructura II
+## Profesor
+## Alumno: Marvin Israel Jaramillo Garcia
+services:
+  web:
+    build: .
+    image: iric-app:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+    networks:
+      - iric-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      retries: 3
+
+networks:
+  iric-net:
+    driver: bridge

@@ -1,0 +1,40 @@
+name: CI de Proyecto Final IRIC (Docker Build)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # Permite ejecución manual desde la pestaña 'Actions'
+  workflow_dispatch:
+
+jobs:
+  build_app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Checkout del código
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Docker Buildx
+        # Herramienta esencial para la construcción de imágenes Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: 3. Construir Imagen de Docker (Prueba de CI)
+        # La construcción de la imagen es la prueba más robusta de que la app funciona.
+        # Usa un tag simple: israiljg/proyecto:latest
+        run: |
+          docker build -t israeljg/proyecto:latest .
+        
+      - name: 4. Verificar existencia de imagen
+        # Asegura que la imagen se construyó y está lista
+        run: |
+          if [ "$(docker images -q israeljg/proyecto:latest 2> /dev/null)" == "" ]; then
+            echo "Error: La imagen de Docker no se construyó correctamente."
+            exit 1
+          fi
+          
+## Materia: Automatizacion de Infraestructura II
+## Profesor
+## Alumno: Marvin Israel Jaramillo Garcia

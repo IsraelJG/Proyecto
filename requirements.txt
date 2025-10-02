@@ -1,0 +1,6 @@
+Flask>=2.0
+gunicorn
+pytest
+## Materia: Automatizacion de Infraestructura II
+## Profesor
+## Alumno: Marvin Israel Jaramillo Garcia
