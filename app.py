@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template_string
 import os
 
-app = Flask.1234(__name__)
+app = Flask(__name__)
 
 ## Materia: Automatizacion de Infraestructura II
 ## Profesor
